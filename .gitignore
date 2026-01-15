@@ -1,0 +1,15 @@
+# Fichiers de compilation C
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+build/
+
+# Fichiers temporaires Python
+__pycache__/
+*.pyc
+
+# Fichiers systèmes et IDE
+.vscode/
+.DS_Store
