@@ -2,11 +2,8 @@
 #include <stm32f4/gpio.h>
 #include <stm32f4/io.h>
 
-/* --- CONFIGURATION --- */
-#define GREEN_LED   12  // LED Verte (Commande Bluetooth)
-#define ORANGE_LED  13  // LED Orange (Témoin de vie)
-/* --------------------- */
-
+#define GREEN_LED   12 
+#define ORANGE_LED  13  
 // Registres USART1
 #define USART1_BASE     0x40011000
 #define USART1_SR       _IOREG(USART1_BASE, 0x00)
@@ -21,17 +18,17 @@
 #define USART_RE        (1 << 2)
 
 void init_system(void) {
-    // 1. Activer les horloges (GPIOA, GPIOD, USART1)
-    // Bit 0 = GPIOA (PA9/PA10), Bit 3 = GPIOD (LEDs)
+    // Activer les horloges (GPIOA, GPIOD, USART1)
+    // Bit 0 = GPIOA (PA9/PA10), Bit 3 = GPIOD (LED)
     RCC_AHB1ENR |= (1 << 0) | (1 << 3); 
     RCC_APB2ENR |= (1 << 4); // USART1
 
-    // 2. Configurer les LEDs (Green=12, Orange=13) en SORTIE
+    //  Configurer les LEDs 
     GPIOD_MODER &= ~((0x3 << (GREEN_LED * 2)) | (0x3 << (ORANGE_LED * 2))); 
     GPIOD_MODER |=  ((0x1 << (GREEN_LED * 2)) | (0x1 << (ORANGE_LED * 2)));
 
-    // 3. Configurer Bluetooth PA9/PA10 en Alternate Function (AF7)
-    // PA9 = TX, PA10 = RX
+    //  configurer bluetooth PA9/PA10 en alternate function (AF7)
+    // PA9 = TX, PA10 = RX ( ou branchement contraire)
     // Bits 18-19 pour PA9, Bits 20-21 pour PA10
     GPIOA_MODER &= ~((0x3 << 18) | (0x3 << 20)); // Reset
     GPIOA_MODER |=  ((0x2 << 18) | (0x2 << 20)); // Mode AF (10)
@@ -42,12 +39,10 @@ void init_system(void) {
     GPIOA_AFRH  &= ~((0xF << 4) | (0xF << 8)); // Reset
     GPIOA_AFRH  |=  ((0x7 << 4) | (0x7 << 8)); // Set AF7 (0111)
 
-    // 4. Vitesse pour horloge APB2 = 84 MHz
     // 9600 Bauds : 84000000 / 9600 = 8750 = 0x222E
-    // ATTENTION : Si ton module est configuré en 38400, mets 0x88B ici.
     USART1_BRR = 0x222E; 
 
-    // 5. Activer UART
+    // Activer UART
     USART1_CR1 = USART_UE | USART_TE | USART_RE;
 }
 
@@ -62,11 +57,11 @@ int main(void) {
     volatile int compteur_temps = 0;
     int etat_led_orange = 0;
 
-    // Message de test au démarrage
+    // Message de test au demarrage
     send_char('O'); send_char('K'); send_char('\n');
 
     while(1) {
-        // --- TACHE 1 : LED ORANGE (HEARTBEAT) ---
+        // led orange qui clignotte en permanence (pour tester le code)
         compteur_temps++;
         if (compteur_temps > 400000) { 
             if (etat_led_orange == 0) {
@@ -79,15 +74,15 @@ int main(void) {
             compteur_temps = 0;
         }
 
-        // --- TACHE 2 : RECEPTION BLUETOOTH ---
+        // reception bluetooth
         if (USART1_SR & USART_RXNE) {
-            char recu = USART1_DR; // Lire le caractère
+            char recu = USART1_DR; // lire le caractere recu 
 
             if (recu == '1') {
-                GPIOD_BSRR = (1 << GREEN_LED); // Allume Verte
+                GPIOD_BSRR = (1 << GREEN_LED); // allume Verte
             }
             else if (recu == '0') {
-                GPIOD_BSRR = (1 << (GREEN_LED + 16)); // Éteint Verte
+                GPIOD_BSRR = (1 << (GREEN_LED + 16)); // eteint verte
             }
         }
     }
